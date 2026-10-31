@@ -1,0 +1,336 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comment Remover | Compiler Construction</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        header {
+            background: #172554;
+            color: white;
+            text-align: center;
+            padding: 28px 15px;
+        }
+
+        header h1 {
+            margin: 0 0 10px;
+            font-size: 30px;
+        }
+
+        header p {
+            margin: 5px 0;
+            color: #cbd5e1;
+        }
+
+        .container {
+            max-width: 1150px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        select {
+            padding: 10px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            background: white;
+            font-size: 15px;
+        }
+
+        .editor {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px #0000000d;
+            min-width: 0;
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 20px;
+        }
+
+        textarea,
+        pre {
+            display: block;
+            width: 100%;
+            min-height: 320px;
+            margin: 0;
+            padding: 15px;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            background: #0f172a;
+            color: #e2e8f0;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 14px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            tab-size: 4;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        pre {
+            overflow: auto;
+        }
+
+        button {
+            padding: 11px 16px;
+            margin-top: 12px;
+            border: none;
+            border-radius: 7px;
+            background: #2563eb;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .secondary {
+            background: #475569;
+        }
+
+        .secondary:hover {
+            background: #334155;
+        }
+
+        .success {
+            color: #15803d;
+            font-weight: bold;
+            margin-top: 14px;
+        }
+
+        .description {
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px 15px;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        @media (max-width: 750px) {
+            .editor {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 25px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Comment Remover</h1>
+        <p>Compiler Construction Mini Project</p>
+        <p>Remove comments from C and Python source code</p>
+    </header>
+
+    <main class="container">
+        <form method="POST" id="codeForm">
+
+            <div class="toolbar">
+                <label for="language">Select Programming Language:</label>
+
+                <select name="language" id="language">
+                    <option value="c"
+                        {% if language == "c" %}selected{% endif %}>
+                        C
+                    </option>
+
+                    <option value="python"
+                        {% if language == "python" %}selected{% endif %}>
+                        Python
+                    </option>
+                </select>
+            </div>
+
+            <div class="editor">
+                <section class="panel">
+                    <h2>Input Source Code</h2>
+                    <p class="description">
+                        Paste your C or Python program below.
+                    </p>
+
+                    <textarea
+                        name="code"
+                        id="code"
+                        placeholder="Paste your source code here..."
+                        spellcheck="false"
+                        required>{{ input_code | e }}</textarea>
+
+                    <button type="submit">
+                        Remove Comments
+                    </button>
+
+                    <button
+                        type="button"
+                        class="secondary"
+                        onclick="loadSample()">
+                        Load Sample
+                    </button>
+
+                    <button
+                        type="button"
+                        class="secondary"
+                        onclick="clearCode()">
+                        Clear
+                    </button>
+                </section>
+
+                <section class="panel">
+                    <h2>Output: Cleaned Code</h2>
+                    <p class="description">
+                        Your code without comments appears here.
+                    </p>
+
+                    <pre id="output">{{ output_code | e }}</pre>
+
+                    <button
+                        type="button"
+                        onclick="copyOutput()">
+                        Copy Output
+                    </button>
+
+                    <button
+                        type="button"
+                        class="secondary"
+                        onclick="downloadOutput()">
+                        Download .c / .py
+                    </button>
+
+                    {% if output_code %}
+                        <p class="success">
+                            Comments removed from the submitted code.
+                        </p>
+                    {% endif %}
+                </section>
+            </div>
+        </form>
+    </main>
+
+    <footer>
+        Built using Python, Flask, HTML and CSS
+        <br>
+        Compiler Construction Mini Project
+    </footer>
+
+    <script>
+        const languageSelect = document.getElementById("language");
+        const codeInput = document.getElementById("code");
+        const output = document.getElementById("output");
+
+        function loadSample() {
+            if (languageSelect.value === "python") {
+                codeInput.value =
+`# This is a single-line comment
+def add(a, b):
+    # Calculate the sum
+    result = a + b
+    print("Result:", result)  # Display result
+    return result
+
+add(10, 20)`;
+            } else {
+                codeInput.value =
+`#include <stdio.h>
+
+int main() {
+    // Declare two numbers
+    int a = 10;
+    int b = 20;
+
+    /* Calculate the sum
+       of both numbers */
+    int sum = a + b;
+
+    printf("Sum = %d\\\\n", sum); // Display result
+    return 0;
+}`;
+            }
+
+            output.textContent = "";
+        }
+
+        function clearCode() {
+            codeInput.value = "";
+            output.textContent = "";
+        }
+
+        async function copyOutput() {
+            const text = output.textContent;
+
+            try {
+                await navigator.clipboard.writeText(text);
+                alert("Cleaned code copied!");
+            } catch (error) {
+                alert("Copy failed. Please select and copy the output manually.");
+            }
+        }
+
+        function downloadOutput() {
+            const text = output.textContent;
+            const extension =
+                languageSelect.value === "python" ? "py" : "c";
+
+            const blob = new Blob(
+                [text],
+                { type: "text/plain;charset=utf-8" }
+            );
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+
+            link.href = url;
+            link.download = "output." + extension;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
